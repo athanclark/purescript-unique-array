@@ -98,6 +98,9 @@ toUnfoldable = Array.toUnfoldable <<< toArray
 fromArray :: forall a. Eq a => Array a -> Maybe (UniqueArray a)
 fromArray = Array.foldM snoc empty
 
+unsafeFromArray :: forall a. Array a -> UniqueArray a
+unsafeFromArray = UniqueArray
+
 toArray :: forall a. UniqueArray a -> Array a
 toArray (UniqueArray x) = x
 
