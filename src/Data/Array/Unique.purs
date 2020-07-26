@@ -27,9 +27,14 @@ module Data.Array.Unique
   , unsnoc
   , (!!)
   , index
+  , map
+  , unsafeMap
+  , unsafeTraverse
+  , unsafeSequence
   ) where
 
-import Prelude
+import Prelude hiding (map)
+import Prelude (map) as Prelude
 import Data.Array
   ( fromFoldable
   , toUnfoldable
@@ -59,6 +64,7 @@ import Data.Maybe (Maybe (..))
 import Data.Generic.Rep (class Generic)
 import Data.Argonaut (class DecodeJson, class EncodeJson)
 import Data.ArrayBuffer.Class (class EncodeArrayBuffer, class DecodeArrayBuffer, class DynamicByteLength)
+import Data.Traversable (traverse, sequence)
 import Test.QuickCheck (class Arbitrary, arbitrary)
 
 newtype UniqueArray a = UniqueArray (Array a)
@@ -187,3 +193,21 @@ infixl 8 index as !!
 
 index :: forall a. UniqueArray a -> Int -> Maybe a
 index (UniqueArray xs) i = Array.index xs i
+
+map :: forall a b. Eq b => (a -> b) -> UniqueArray a -> Maybe (UniqueArray b)
+map f (UniqueArray xs) = UniqueArray <$> Array.foldM go [] xs
+  where
+    go :: Array b -> a -> Maybe (Array b)
+    go acc x =
+      let y :: b
+          y = f x
+      in  if elem y acc then Nothing else Just (Array.snoc acc y)
+
+unsafeMap :: forall a b. (a -> b) -> UniqueArray a -> UniqueArray b
+unsafeMap f (UniqueArray xs) = UniqueArray (Prelude.map f xs)
+
+unsafeTraverse :: forall a b m. Applicative m => (a -> m b) -> UniqueArray a -> m (UniqueArray b)
+unsafeTraverse f (UniqueArray xs) = UniqueArray <$> traverse f xs
+
+unsafeSequence :: forall a m. Applicative m => UniqueArray (m a) -> m (UniqueArray a)
+unsafeSequence (UniqueArray xs) = UniqueArray <$> sequence xs
