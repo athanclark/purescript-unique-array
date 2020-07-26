@@ -51,6 +51,7 @@ import Data.Array
   , deleteAt
   , insertAt
   , updateAt
+  , foldl
   ) as Array
 import Data.Foldable (class Foldable, elem)
 import Data.Unfoldable (class Unfoldable)
@@ -58,6 +59,7 @@ import Data.Maybe (Maybe (..))
 import Data.Generic.Rep (class Generic)
 import Data.Argonaut (class DecodeJson, class EncodeJson)
 import Data.ArrayBuffer.Class (class EncodeArrayBuffer, class DecodeArrayBuffer, class DynamicByteLength)
+import Test.QuickCheck (class Arbitrary, arbitrary)
 
 newtype UniqueArray a = UniqueArray (Array a)
 
@@ -71,6 +73,15 @@ derive newtype instance decodeJsonUniqueArray :: DecodeJson a => DecodeJson (Uni
 derive newtype instance encodeArrayBufferUniqueArray :: EncodeArrayBuffer a => EncodeArrayBuffer (UniqueArray a)
 derive newtype instance decodeArrayBufferUniqueArray :: (DynamicByteLength a, DecodeArrayBuffer a) => DecodeArrayBuffer (UniqueArray a)
 derive newtype instance dynamicByteLengthUniqueArray :: DynamicByteLength a => DynamicByteLength (UniqueArray a)
+instance arbitraryUniqueArray :: (Arbitrary a, Eq a) => Arbitrary (UniqueArray a) where
+  arbitrary = UniqueArray <<< nub <$> arbitrary
+    where
+      nub :: forall b. Eq b => Array b -> Array b
+      nub =
+        let go acc next
+              | elem next acc = acc
+              | otherwise = Array.snoc acc next
+        in  Array.foldl go []
 
 fromFoldable :: forall a f. Eq a => Foldable f => f a -> Maybe (UniqueArray a)
 fromFoldable = fromArray <<< Array.fromFoldable
