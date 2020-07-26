@@ -31,6 +31,7 @@ module Data.Array.Unique
   , unsafeMap
   , unsafeTraverse
   , unsafeSequence
+  , unsafeFromArray
   ) where
 
 import Prelude hiding (map)
