@@ -55,12 +55,22 @@ import Data.Array
 import Data.Foldable (class Foldable, elem)
 import Data.Unfoldable (class Unfoldable)
 import Data.Maybe (Maybe (..))
+import Data.Generic.Rep (class Generic)
+import Data.Argonaut (class DecodeJson, class EncodeJson)
+import Data.ArrayBuffer.Class (class EncodeArrayBuffer, class DecodeArrayBuffer, class DynamicByteLength)
 
 newtype UniqueArray a = UniqueArray (Array a)
 
+derive instance genericUniqueArray :: Generic a a' => Generic (UniqueArray a) _
+derive newtype instance showUniqueArray :: Show a => Show (UniqueArray a)
 derive newtype instance eqUniqueArray :: Eq a => Eq (UniqueArray a)
 derive newtype instance ordUniqueArray :: Ord a => Ord (UniqueArray a)
 derive newtype instance foldableUniqueArray :: Foldable UniqueArray
+derive newtype instance encodeJsonUniqueArray :: EncodeJson a => EncodeJson (UniqueArray a)
+derive newtype instance decodeJsonUniqueArray :: DecodeJson a => DecodeJson (UniqueArray a)
+derive newtype instance encodeArrayBufferUniqueArray :: EncodeArrayBuffer a => EncodeArrayBuffer (UniqueArray a)
+derive newtype instance decodeArrayBufferUniqueArray :: (DynamicByteLength a, DecodeArrayBuffer a) => DecodeArrayBuffer (UniqueArray a)
+derive newtype instance dynamicByteLengthUniqueArray :: DynamicByteLength a => DynamicByteLength (UniqueArray a)
 
 fromFoldable :: forall a f. Eq a => Foldable f => f a -> Maybe (UniqueArray a)
 fromFoldable = fromArray <<< Array.fromFoldable
