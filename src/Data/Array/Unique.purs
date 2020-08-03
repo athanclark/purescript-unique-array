@@ -28,10 +28,12 @@ module Data.Array.Unique
   , (!!)
   , index
   , map
+  , mapMaybe
   , unsafeMap
   , unsafeTraverse
   , unsafeSequence
   , unsafeFromArray
+  , unsafeMapMaybe
   ) where
 
 import Prelude hiding (map)
@@ -58,6 +60,7 @@ import Data.Array
   , insertAt
   , updateAt
   , foldl
+  , mapMaybe
   ) as Array
 import Data.Foldable (class Foldable, elem)
 import Data.Unfoldable (class Unfoldable)
@@ -215,3 +218,13 @@ unsafeTraverse f (UniqueArray xs) = UniqueArray <$> traverse f xs
 
 unsafeSequence :: forall a m. Applicative m => UniqueArray (m a) -> m (UniqueArray a)
 unsafeSequence (UniqueArray xs) = UniqueArray <$> sequence xs
+
+mapMaybe :: forall a b. Eq b => (a -> Maybe b) -> UniqueArray a -> Maybe (UniqueArray b)
+mapMaybe f (UniqueArray xs) =
+  let ys = Array.mapMaybe f xs
+  in  fromArray ys
+
+unsafeMapMaybe :: forall a b. Eq b => (a -> Maybe b) -> UniqueArray a -> UniqueArray b
+unsafeMapMaybe f (UniqueArray xs) =
+  let ys = Array.mapMaybe f xs
+  in  UniqueArray ys
