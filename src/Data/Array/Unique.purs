@@ -29,11 +29,13 @@ module Data.Array.Unique
   , index
   , map
   , mapMaybe
+  , concatMap
   , unsafeMap
   , unsafeTraverse
   , unsafeSequence
   , unsafeFromArray
   , unsafeMapMaybe
+  , unsafeConcatMap
   ) where
 
 import Prelude hiding (map)
@@ -61,6 +63,7 @@ import Data.Array
   , updateAt
   , foldl
   , mapMaybe
+  , concatMap
   ) as Array
 import Data.Foldable (class Foldable, elem)
 import Data.Unfoldable (class Unfoldable)
@@ -227,4 +230,14 @@ mapMaybe f (UniqueArray xs) =
 unsafeMapMaybe :: forall a b. Eq b => (a -> Maybe b) -> UniqueArray a -> UniqueArray b
 unsafeMapMaybe f (UniqueArray xs) =
   let ys = Array.mapMaybe f xs
+  in  UniqueArray ys
+
+concatMap :: forall a b. Eq b => (a -> UniqueArray b) -> UniqueArray a -> Maybe (UniqueArray b)
+concatMap f (UniqueArray xs) =
+  let ys = Array.concatMap ((\(UniqueArray zs) -> zs) <<< f) xs
+  in  fromArray ys
+
+unsafeConcatMap :: forall a b. Eq b => (a -> UniqueArray b) -> UniqueArray a -> UniqueArray b
+unsafeConcatMap f (UniqueArray xs) =
+  let ys = Array.concatMap ((\(UniqueArray zs) -> zs) <<< f) xs
   in  UniqueArray ys
