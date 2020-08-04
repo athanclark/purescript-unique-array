@@ -227,7 +227,7 @@ mapMaybe f (UniqueArray xs) =
   let ys = Array.mapMaybe f xs
   in  fromArray ys
 
-unsafeMapMaybe :: forall a b. Eq b => (a -> Maybe b) -> UniqueArray a -> UniqueArray b
+unsafeMapMaybe :: forall a b. (a -> Maybe b) -> UniqueArray a -> UniqueArray b
 unsafeMapMaybe f (UniqueArray xs) =
   let ys = Array.mapMaybe f xs
   in  UniqueArray ys
@@ -237,7 +237,10 @@ concatMap f (UniqueArray xs) =
   let ys = Array.concatMap ((\(UniqueArray zs) -> zs) <<< f) xs
   in  fromArray ys
 
-unsafeConcatMap :: forall a b. Eq b => (a -> UniqueArray b) -> UniqueArray a -> UniqueArray b
+unsafeConcatMap :: forall a b. (a -> UniqueArray b) -> UniqueArray a -> UniqueArray b
 unsafeConcatMap f (UniqueArray xs) =
   let ys = Array.concatMap ((\(UniqueArray zs) -> zs) <<< f) xs
   in  UniqueArray ys
+
+unsafeAppend :: forall a. UniqueArray a -> UniqueArray a -> UniqueArray a
+unsafeAppend (UniqueArray xs) (UniqueArray ys) = UniqueArray (xs <> ys)
