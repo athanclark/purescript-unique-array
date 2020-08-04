@@ -262,3 +262,6 @@ unsafeConcatMap f (UniqueArray xs) =
 
 unsafeAppend :: forall a. UniqueArray a -> UniqueArray a -> UniqueArray a
 unsafeAppend (UniqueArray xs) (UniqueArray ys) = UniqueArray (xs <> ys)
+
+unsafeSnoc :: forall a. UniqueArray a -> a -> UniqueArray a
+unsafeSnoc (UniqueArray xs) x = UniqueArray (Array.snoc xs x)
