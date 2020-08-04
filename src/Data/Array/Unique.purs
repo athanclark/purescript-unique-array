@@ -70,9 +70,11 @@ import Data.Foldable (class Foldable, elem)
 import Data.Unfoldable (class Unfoldable)
 import Data.Maybe (Maybe (..))
 import Data.Generic.Rep (class Generic)
-import Data.Argonaut (class DecodeJson, class EncodeJson)
-import Data.ArrayBuffer.Class (class EncodeArrayBuffer, class DecodeArrayBuffer, class DynamicByteLength)
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, JsonDecodeError (TypeMismatch))
+import Data.ArrayBuffer.Class (class EncodeArrayBuffer, class DecodeArrayBuffer, class DynamicByteLength, readArrayBuffer)
 import Data.Traversable (traverse, sequence)
+import Control.Monad.Error.Class (throwError)
+import Effect.Exception (throw)
 import Test.QuickCheck (class Arbitrary, arbitrary)
 
 newtype UniqueArray a = UniqueArray (Array a)
@@ -83,9 +85,24 @@ derive newtype instance eqUniqueArray :: Eq a => Eq (UniqueArray a)
 derive newtype instance ordUniqueArray :: Ord a => Ord (UniqueArray a)
 derive newtype instance foldableUniqueArray :: Foldable UniqueArray
 derive newtype instance encodeJsonUniqueArray :: EncodeJson a => EncodeJson (UniqueArray a)
-derive newtype instance decodeJsonUniqueArray :: DecodeJson a => DecodeJson (UniqueArray a)
+instance decodeJsonUniqueArray :: (DecodeJson a, Eq a, Show a) => DecodeJson (UniqueArray a) where
+  decodeJson json = do
+    xs <- decodeJson json
+    case fromArray xs of
+      Nothing ->
+        throwError $ TypeMismatch $ "unique: " <> show xs
+      Just ys -> pure ys
 derive newtype instance encodeArrayBufferUniqueArray :: EncodeArrayBuffer a => EncodeArrayBuffer (UniqueArray a)
-derive newtype instance decodeArrayBufferUniqueArray :: (DynamicByteLength a, DecodeArrayBuffer a) => DecodeArrayBuffer (UniqueArray a)
+instance decodeArrayBufferUniqueArray :: (DynamicByteLength a, DecodeArrayBuffer a, Eq a, Show a) => DecodeArrayBuffer (UniqueArray a) where
+  readArrayBuffer b o = do
+    mXs <- readArrayBuffer b o
+    case mXs of
+      Nothing -> pure Nothing
+      Just xs -> case fromArray xs of
+        Nothing -> do
+          _ <- throw $ "Array not unique: " <> show xs
+          pure Nothing
+        Just ys -> pure (Just ys)
 derive newtype instance dynamicByteLengthUniqueArray :: DynamicByteLength a => DynamicByteLength (UniqueArray a)
 instance arbitraryUniqueArray :: (Arbitrary a, Eq a) => Arbitrary (UniqueArray a) where
   arbitrary = UniqueArray <<< nub <$> arbitrary
